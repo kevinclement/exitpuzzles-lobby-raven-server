@@ -1,0 +1,27 @@
+{
+  "name": "lobby-raven-server",
+  "version": "0.0.2",
+  "description": "Code the run the control server software for exitpuzzles raven",
+  "author": "Kevin Clement <kevin.clement@gmail.com>",
+  "private": true,
+  "scripts": {
+    "dev": "node index.js",
+    "verbose": "DEBUG=true node index.js",
+    "tail": "tail -f /var/log/syslog | grep exitpuzzles-raven",
+    "stop": "sudo systemctl stop exitpuzzles.raven.service",
+    "start": "sudo systemctl start exitpuzzles.raven.service",
+    "restart": "sudo systemctl restart exitpuzzles.raven.service",
+    "status": "sudo systemctl status exitpuzzles.raven.service"
+  },
+  "dependencies": {
+    "firebase": "^8.6.8",
+    "play-sound": "^1.1.3",
+    "serialport": "^7.1.5",
+    "winston": "^3.2.1"
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kevinclement/exitpuzzles-lobby-raven-server.git"
+  }
+}
