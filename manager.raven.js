@@ -2,6 +2,7 @@
 const EventEmitter = require('events');
 const SerialPort = require('serialport');
 const ReadlineParser = require('@serialport/parser-readline');
+const { exec } = require("child_process");
 
 module.exports = class RavenController extends EventEmitter {
     constructor(opts) {
@@ -25,25 +26,13 @@ module.exports = class RavenController extends EventEmitter {
             this.audio.play(fileToPlay);
         })
 
-        // Read data that is available but keep the stream in "paused mode"
-        // port.on('readable', function () {
-        //     console.log('Data:', port.read())
-        // })
-  
-        // // Switches the port into "flowing mode"
-        // port.on('data', function (data) {
-        //     console.log('flData:', data)
-
-        //     const ourBuffer = Buffer.from(data);
-
-
-        //     console.log("buff read: ", ourBuffer.toString())
-        // })
-        
-  
-
+        // [ ] GPIO for button press
+        //   [ ] debounce it
+        // [ ] call start sequence on a timer
+        // [ ] wire up to website
+        //   [ ] can manually trigger full or caw
+        //   [ ] if manually trigger, reset timer 
           
-        // TODO: debounce it
         // gpio.on('change', (channel, value) => {
         //     if (this.caw != value) {
         //         console.log('state changed ' + this.caw + ' => ' + value);
@@ -55,5 +44,31 @@ module.exports = class RavenController extends EventEmitter {
         // gpio.on('change', (pin, value) => {
         //     this.magnetStateChanged(pin, value);
         // });
+    }
+
+    triggerFullRavenAnimation() {
+        exec("UscCmd --sub 6", (error, stdout, stderr) => {
+            if (error) {
+                console.log(`error: ${error.message}`);
+                return;
+            }
+            if (stderr) {
+                console.log(`stderr: ${stderr}`);
+                return;
+            }
+        });
+    }
+
+    triggerTripleCawAnimation() {
+        exec("UscCmd --sub 7", (error, stdout, stderr) => {
+            if (error) {
+                console.log(`error: ${error.message}`);
+                return;
+            }
+            if (stderr) {
+                console.log(`stderr: ${stderr}`);
+                return;
+            }
+        });
     }
 }
