@@ -4,6 +4,9 @@ const SerialPort = require('serialport');
 const ReadlineParser = require('@serialport/parser-readline');
 const { exec } = require("child_process");
 
+// trigger the raven animation every 5 minutes
+const ANIMATION_TIMEOUT = 5 * 60 * 1000
+
 module.exports = class RavenController extends EventEmitter {
     constructor(opts) {
         super();
@@ -26,9 +29,10 @@ module.exports = class RavenController extends EventEmitter {
             this.audio.play(fileToPlay);
         })
 
+        setInterval(this.triggerFullRavenAnimation, ANIMATION_TIMEOUT);
+
         // [ ] GPIO for button press
         //   [ ] debounce it
-        // [ ] call start sequence on a timer
         // [ ] wire up to website
         //   [ ] can manually trigger full or caw
         //   [ ] if manually trigger, reset timer 
@@ -47,6 +51,7 @@ module.exports = class RavenController extends EventEmitter {
     }
 
     triggerFullRavenAnimation() {
+        console.log("Triggering Full Raven Animation...")
         exec("UscCmd --sub 6", (error, stdout, stderr) => {
             if (error) {
                 console.log(`error: ${error.message}`);
@@ -60,6 +65,7 @@ module.exports = class RavenController extends EventEmitter {
     }
 
     triggerTripleCawAnimation() {
+        console.log("Triggering Triple Caw Animation...")
         exec("UscCmd --sub 7", (error, stdout, stderr) => {
             if (error) {
                 console.log(`error: ${error.message}`);
