@@ -1,7 +1,7 @@
 let fb = new (require('./firebase'))
 let logger = new (require('./logging'))
 let audio = new (require('./audio'))({ logger: logger })
-let raven = new (require('./manager.raven'))({ logger: logger })
+let raven = new (require('./manager.raven'))({ logger: logger, audio: audio })
 
 let managers = [];
 
