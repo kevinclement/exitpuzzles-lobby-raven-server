@@ -1,12 +1,9 @@
 let fb = new (require('./firebase'))
 let logger = new (require('./logging'))
 let audio = new (require('./audio'))({ logger: logger })
-let raven = new (require('./manager.raven'))({ logger: logger, audio: audio })
+let raven = new (require('./manager.raven'))({ logger: logger, fb: fb, audio: audio })
 
 let managers = [];
-
-// TODO: add back when I know how to interact with raven
-// managers.push(new (require('./manager.raven'))({ name: 'raven', logger: logger, fb: fb, audio: audio }))
 
 logger.log('raven: Started ExitPuzzles Raven server.');
 

@@ -4,9 +4,6 @@ const SerialPort = require('serialport');
 const ReadlineParser = require('@serialport/parser-readline');
 const { exec } = require("child_process");
 
-// trigger the raven animation every 5 minutes
-const ANIMATION_TIMEOUT = 5 * 60 * 1000
-
 // length of time that needs to elapse before you can press the button again
 const TRIPLE_ANIMATE_WAIT_TIME = 10 * 1000
 
@@ -14,8 +11,19 @@ module.exports = class RavenController extends EventEmitter {
     constructor(opts) {
         super();
         this.logger = opts.logger
+        this.logPrefix = 'controller: '
         this.audio = opts.audio
         this.lastBtnTrigger = 0;
+        this.animationTimer = undefined;
+
+        // Watch DB and update as needed
+        let ref = opts.fb.db.ref('lobby/devices/raven')
+        ref.on('value', (snapshot) => {
+            let raven = snapshot.val()
+            if (raven == null) return
+
+            this.handleAnimationTimer(raven.animationEnabled, raven.animationWaitTimeMin);
+        })
 
         const port = new SerialPort('/dev/ttyACM1', { baudRate:9600 })
 
@@ -28,11 +36,9 @@ module.exports = class RavenController extends EventEmitter {
                     ? 'crow1.wav'                    
                     : 'crow1.wav';
 
-            console.log("Caw detected.  Playing audio '" + fileToPlay +"'")
+            this.logger.log(this.logPrefix + "caw detected.  playing audio '" + fileToPlay +"'")
             this.audio.play(fileToPlay);
         })
-
-        setInterval(this.triggerFullRavenAnimation, ANIMATION_TIMEOUT);
 
         // [ ] wire up to website
         //   [ ] manually trigger full
@@ -50,18 +56,34 @@ module.exports = class RavenController extends EventEmitter {
 
             // if there was a previous press, make sure enough time has elapsed to trigger a new one
             if (this.lastBtnTrigger != 0 && Date.now() - this.lastBtnTrigger < TRIPLE_ANIMATE_WAIT_TIME) {
-                console.log("Triple raven button pressed. IGNORING DUE TO ELAPSED TIME.");
+                this.logger.log(this.logPrefix + "triple raven button pressed. IGNORING DUE TO ELAPSED TIME.")
                 return;
             }
                 
-            console.log("Triple raven button pressed.");
+            this.logger.log(this.logPrefix + "triple raven button pressed.")
             this.lastBtnTrigger = Date.now();
             this.triggerTripleCawAnimation();
         });
     }
 
+    handleAnimationTimer(isEnabled, waitTimeInMin) {
+        this.logger.log(this.logPrefix + "updating animation timer, enabled: " + isEnabled + ", waitTimeMin: " + waitTimeInMin)
+
+        // if there is a timer running, lets remove it
+        if (this.animationTimer) {
+            this.logger.log(this.logPrefix + "running timer found, removing...")
+            clearInterval(this.animationTimer);
+            this.animationTimer = undefined;
+        }
+
+        if (isEnabled) {
+            this.logger.log(this.logPrefix + "scheduling timer...")
+            this.animationTimer = setInterval(() => { this.triggerFullRavenAnimation() }, waitTimeInMin * 60 * 1000);
+        }
+    }
+
     triggerFullRavenAnimation() {
-        console.log("Triggering Full Raven Animation...")
+        this.logger.log(this.logPrefix + "triggering full raven animation...")
         exec("UscCmd --sub 6", (error, stdout, stderr) => {
             if (error) {
                 console.log(`error: ${error.message}`);
@@ -75,7 +97,7 @@ module.exports = class RavenController extends EventEmitter {
     }
 
     triggerTripleCawAnimation() {
-        console.log("Triggering Triple Caw Animation...")
+        this.logger.log(this.logPrefix + "triggering triple caw animation...")
         exec("UscCmd --sub 7", (error, stdout, stderr) => {
             if (error) {
                 console.log(`error: ${error.message}`);
