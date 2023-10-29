@@ -36,6 +36,8 @@ module.exports = class RavenController extends EventEmitter {
         // [ ] wire up to website
         //   [ ] can manually trigger full or caw
         //   [ ] if manually trigger, reset timer 
+        // [ ] add wifi for room down there
+        // [ ] print pi case 
           
         // gpio.on('change', (channel, value) => {
         //     if (this.caw != value) {
