@@ -40,7 +40,8 @@ module.exports = class RavenController extends EventEmitter {
         //   [ ] manually trigger caw
         //   [ ] enable/disable timer
         //     [ ] expose time between runs 
-        // [ ] add wifi for room down there
+        // [ ] add auto-start
+        // [ ] once device is installed, need to change router config and static assign to allow ssh
         // [ ] print pi case 
         
         gpio.setup(11, gpio.DIR_IN, gpio.EDGE_BOTH);
