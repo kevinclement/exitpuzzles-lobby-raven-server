@@ -1,4 +1,4 @@
-// var gpio = require('rpi-gpio');
+var gpio = require('rpi-gpio');
 const EventEmitter = require('events');
 const SerialPort = require('serialport');
 const ReadlineParser = require('@serialport/parser-readline');
@@ -7,12 +7,15 @@ const { exec } = require("child_process");
 // trigger the raven animation every 5 minutes
 const ANIMATION_TIMEOUT = 5 * 60 * 1000
 
+// length of time that needs to elapse before you can press the button again
+const TRIPLE_ANIMATE_WAIT_TIME = 10 * 1000
+
 module.exports = class RavenController extends EventEmitter {
     constructor(opts) {
         super();
         this.logger = opts.logger
         this.audio = opts.audio
-        // this.caw = false;
+        this.lastBtnTrigger = 0;
 
         const port = new SerialPort('/dev/ttyACM1', { baudRate:9600 })
 
@@ -31,25 +34,30 @@ module.exports = class RavenController extends EventEmitter {
 
         setInterval(this.triggerFullRavenAnimation, ANIMATION_TIMEOUT);
 
-        // [ ] GPIO for button press
-        //   [ ] debounce it
         // [ ] wire up to website
-        //   [ ] can manually trigger full or caw
-        //   [ ] if manually trigger, reset timer 
+        //   [ ] manually trigger full
+        //     [ ] if manually trigger, reset timer 
+        //   [ ] manually trigger caw
+        //   [ ] enable/disable timer
+        //     [ ] expose time between runs 
         // [ ] add wifi for room down there
         // [ ] print pi case 
-          
-        // gpio.on('change', (channel, value) => {
-        //     if (this.caw != value) {
-        //         console.log('state changed ' + this.caw + ' => ' + value);
-        //         this.caw = value;
-        //     }
-        // });
+        
+        gpio.setup(11, gpio.DIR_IN, gpio.EDGE_BOTH);
+        gpio.on('change', (pin, value) => {
+            
+            if (!value) return;
 
-        // gpio.setup(7, gpio.DIR_IN, gpio.EDGE_BOTH);
-        // gpio.on('change', (pin, value) => {
-        //     this.magnetStateChanged(pin, value);
-        // });
+            // if there was a previous press, make sure enough time has elapsed to trigger a new one
+            if (this.lastBtnTrigger != 0 && Date.now() - this.lastBtnTrigger < TRIPLE_ANIMATE_WAIT_TIME) {
+                console.log("Triple raven button pressed. IGNORING DUE TO ELAPSED TIME.");
+                return;
+            }
+                
+            console.log("Triple raven button pressed.");
+            this.lastBtnTrigger = Date.now();
+            this.triggerTripleCawAnimation();
+        });
     }
 
     triggerFullRavenAnimation() {
