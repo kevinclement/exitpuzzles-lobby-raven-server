@@ -19,6 +19,8 @@ module.exports = class RavenController extends EventEmitter {
         this.created = (new Date()).getTime()
         this.lastBtnTrigger = 0;
         this.animationTimer = undefined;
+        this.animationEnabled = false;
+        this.animationWaitTimeMin = 0;
 
         // setup supported commands
         this.handlers['raven.enable'] = (s,cb) => {
@@ -35,11 +37,22 @@ module.exports = class RavenController extends EventEmitter {
             cb()
         }
 
+        this.handlers['raven.animate'] = (s,cb) => {
+            this.triggerFullRavenAnimation()
+            cb()
+        }
+        this.handlers['raven.caw'] = (s,cb) => {
+            this.triggerTripleCawAnimation()
+            cb()
+        }
+
         // Watch DB and update as needed        
         this.ref.on('value', (snapshot) => {
             let raven = snapshot.val()
             if (raven == null) return
 
+            this.animationEnabled = raven.animationEnabled
+            this.animationWaitTimeMin = raven.animationWaitTimeMin
             this.handleAnimationTimer(raven.animationEnabled, raven.animationWaitTimeMin);
         })
 
@@ -58,12 +71,6 @@ module.exports = class RavenController extends EventEmitter {
             this.audio.play(fileToPlay);
         })
 
-        // [ ] wire up to website
-        //   [ ] manually trigger full
-        //     [ ] if manually trigger, reset timer 
-        //   [ ] manually trigger caw
-        //   [ ] enable/disable timer
-        //     [ ] expose time between runs 
         // [ ] add auto-start
         // [ ] once device is installed, need to change router config and static assign to allow ssh
         
@@ -112,6 +119,9 @@ module.exports = class RavenController extends EventEmitter {
                 return;
             }
         });
+
+        // reset any timers currently running
+        this.handleAnimationTimer(this.animationEnabled, this.animationWaitTimeMin)
     }
 
     triggerTripleCawAnimation() {
