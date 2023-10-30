@@ -4,6 +4,7 @@ let audio = new (require('./audio'))({ logger: logger })
 let raven = new (require('./manager.raven'))({ logger: logger, fb: fb, audio: audio })
 
 let managers = [];
+managers.push(raven);
 
 logger.log('raven: Started ExitPuzzles Raven server.');
 

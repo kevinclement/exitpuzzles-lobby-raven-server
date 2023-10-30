@@ -11,14 +11,32 @@ module.exports = class RavenController extends EventEmitter {
     constructor(opts) {
         super();
         this.logger = opts.logger
-        this.logPrefix = 'controller: '
         this.audio = opts.audio
+        this.ref = opts.fb.db.ref('lobby/devices/raven')
+        this.name = "raven"
+        this.logPrefix = 'handler: ' + this.name + ': '
+        this.handlers = {};
+        this.created = (new Date()).getTime()
         this.lastBtnTrigger = 0;
         this.animationTimer = undefined;
 
-        // Watch DB and update as needed
-        let ref = opts.fb.db.ref('lobby/devices/raven')
-        ref.on('value', (snapshot) => {
+        // setup supported commands
+        this.handlers['raven.enable'] = (s,cb) => {
+            this.ref.update({
+                animationEnabled: true
+            })
+            cb()
+        }
+
+        this.handlers['raven.disable'] = (s,cb) => {
+            this.ref.update({
+                animationEnabled: false
+            })
+            cb()
+        }
+
+        // Watch DB and update as needed        
+        this.ref.on('value', (snapshot) => {
             let raven = snapshot.val()
             if (raven == null) return
 
@@ -108,5 +126,31 @@ module.exports = class RavenController extends EventEmitter {
                 return;
             }
         });
+    }
+
+    handle(snapshot) {
+        // only push operations that can be handled by this manager
+        Object.keys(this.handlers).forEach((hp) => {
+            if (snapshot.val().command == hp) {
+                let op = snapshot.val()
+
+                // if the operation was in the db before we started, clear it out
+                if (op.created < this.created) {
+                    let now = (new Date()).toString()
+                    this.logger.log(this.logPrefix + 'canceling older op \'' + op.command + '\'.')
+                    snapshot.ref.update({ 'completed': now, 'canceled': now })
+                    return
+                }
+
+                this.logger.log(this.logPrefix + 'handling ' + op.command + ' ...')
+
+                // mark it received since all handlers would need to do it
+                snapshot.ref.update({ 'received': (new Date()).toString() });
+
+                this.handlers[hp](snapshot, () => {
+                    snapshot.ref.update({ 'completed': (new Date()).toString() });
+                })
+            }
+        })
     }
 }
