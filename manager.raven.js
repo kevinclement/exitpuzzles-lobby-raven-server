@@ -22,6 +22,9 @@ module.exports = class RavenController extends EventEmitter {
         this.animationEnabled = false;
         this.animationWaitTimeMin = 0;
 
+        // TODO:
+        //   [ ] once device is installed, need to change router config and static assign to allow ssh
+
         // setup supported commands
         this.handlers['raven.enable'] = (s,cb) => {
             this.ref.update({
@@ -70,10 +73,7 @@ module.exports = class RavenController extends EventEmitter {
             this.logger.log(this.logPrefix + "caw detected.  playing audio '" + fileToPlay +"'")
             this.audio.play(fileToPlay);
         })
-
-        // [ ] add auto-start
-        // [ ] once device is installed, need to change router config and static assign to allow ssh
-        
+       
         gpio.setup(11, gpio.DIR_IN, gpio.EDGE_BOTH);
         gpio.on('change', (pin, value) => {
             
@@ -109,7 +109,7 @@ module.exports = class RavenController extends EventEmitter {
 
     triggerFullRavenAnimation() {
         this.logger.log(this.logPrefix + "triggering full raven animation...")
-        exec("UscCmd --sub 6", (error, stdout, stderr) => {
+        exec("/home/pi/.local/maestro/UscCmd --sub 6", (error, stdout, stderr) => {
             if (error) {
                 console.log(`error: ${error.message}`);
                 return;
@@ -126,7 +126,7 @@ module.exports = class RavenController extends EventEmitter {
 
     triggerTripleCawAnimation() {
         this.logger.log(this.logPrefix + "triggering triple caw animation...")
-        exec("UscCmd --sub 7", (error, stdout, stderr) => {
+        exec("/home/pi/.local/maestro/UscCmd --sub 7", (error, stdout, stderr) => {
             if (error) {
                 console.log(`error: ${error.message}`);
                 return;

@@ -20,3 +20,6 @@ Afterwards, should be able to 'shutdown -r now' and see it come online with ssh 
 sudo systemctl stop exitpuzzles.raven.service
 ```
 
+### Maestro
+Maestro UscCmd needs to be installed on machine at /home/pi/.local/maestro/UscCmd
+
