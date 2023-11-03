@@ -1,4 +1,4 @@
-var gpio = require('rpi-gpio');
+const Gpio = require('onoff').Gpio;
 const EventEmitter = require('events');
 const SerialPort = require('serialport');
 const ReadlineParser = require('@serialport/parser-readline');
@@ -71,11 +71,12 @@ module.exports = class RavenController extends EventEmitter {
             this.audio.play(fileToPlay);
         })
        
-        gpio.setup(11, gpio.DIR_IN, gpio.EDGE_BOTH);
-        gpio.on('change', (pin, value) => {
-            
-            if (!value) return;
-
+        const button = new Gpio(10, 'in', 'rising', {debounceTimeout: 10});
+        button.watch((err, value) => {
+            if (err) {
+              throw err;
+            }
+          
             // if there was a previous press, make sure enough time has elapsed to trigger a new one
             if (this.lastBtnTrigger != 0 && Date.now() - this.lastBtnTrigger < TRIPLE_ANIMATE_WAIT_TIME) {
                 this.logger.log(this.logPrefix + "triple raven button pressed. IGNORING DUE TO ELAPSED TIME.")
@@ -86,6 +87,21 @@ module.exports = class RavenController extends EventEmitter {
             this.lastBtnTrigger = Date.now();
             this.triggerTripleCawAnimation();
         });
+
+        // gpio.setup(19, gpio.DIR_IN, gpio.EDGE_BOTH);
+        // gpio.on('change', (pin, value) => {
+            // if (!value) return;
+
+            // if there was a previous press, make sure enough time has elapsed to trigger a new one
+            // if (this.lastBtnTrigger != 0 && Date.now() - this.lastBtnTrigger < TRIPLE_ANIMATE_WAIT_TIME) {
+            //     this.logger.log(this.logPrefix + "triple raven button pressed. IGNORING DUE TO ELAPSED TIME.")
+            //     return;
+            // }
+                
+            // this.logger.log(this.logPrefix + "triple raven button pressed.")
+            // this.lastBtnTrigger = Date.now();
+            // this.triggerTripleCawAnimation();
+        // });
     }
 
     handleAnimationTimer(isEnabled, waitTimeInMin) {
