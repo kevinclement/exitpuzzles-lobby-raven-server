@@ -22,9 +22,6 @@ module.exports = class RavenController extends EventEmitter {
         this.animationEnabled = false;
         this.animationWaitTimeMin = 0;
 
-        // TODO:
-        //   [ ] once device is installed, need to change router config and static assign to allow ssh
-
         // setup supported commands
         this.handlers['raven.enable'] = (s,cb) => {
             this.ref.update({
