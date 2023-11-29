@@ -20,6 +20,7 @@ module.exports = class RavenController extends EventEmitter {
         this.lastBtnTrigger = 0;
         this.animationTimer = undefined;
         this.animationEnabled = false;
+        this.buttonEnabled = false;
         this.animationWaitTimeMin = 0;
 
         // setup supported commands
@@ -33,6 +34,21 @@ module.exports = class RavenController extends EventEmitter {
         this.handlers['raven.disable'] = (s,cb) => {
             this.ref.update({
                 animationEnabled: false
+            })
+            cb()
+        }
+
+        // Button Enabled/Disabled
+        this.handlers['raven.enableButton'] = (s,cb) => {
+            this.ref.update({
+                buttonEnabled: true
+            })
+            cb()
+        }
+        
+        this.handlers['raven.disabledButton'] = (s,cb) => {
+            this.ref.update({
+                buttonEnabled: false
             })
             cb()
         }
@@ -52,6 +68,7 @@ module.exports = class RavenController extends EventEmitter {
             if (raven == null) return
 
             this.animationEnabled = raven.animationEnabled
+            this.buttonEnabled = raven.buttonEnabled
             this.animationWaitTimeMin = raven.animationWaitTimeMin
             this.handleAnimationTimer(raven.animationEnabled, raven.animationWaitTimeMin);
         })
@@ -71,10 +88,16 @@ module.exports = class RavenController extends EventEmitter {
             this.audio.play(fileToPlay);
         })
        
-        const button = new Gpio(10, 'in', 'rising', {debounceTimeout: 10});
+        const button = new Gpio(10, 'in', 'rising', {debounceTimeout: 500});
         button.watch((err, value) => {
             if (err) {
               throw err;
+            }
+
+            // if the button is disabled from the admin, ignore it
+            if (!this.buttonEnabled) {
+                this.logger.log(this.logPrefix + "triple raven button pressed. IGNORING DUE TO BUTTON DISABLED.")
+                return;
             }
           
             // if there was a previous press, make sure enough time has elapsed to trigger a new one
@@ -87,21 +110,6 @@ module.exports = class RavenController extends EventEmitter {
             this.lastBtnTrigger = Date.now();
             this.triggerTripleCawAnimation();
         });
-
-        // gpio.setup(19, gpio.DIR_IN, gpio.EDGE_BOTH);
-        // gpio.on('change', (pin, value) => {
-            // if (!value) return;
-
-            // if there was a previous press, make sure enough time has elapsed to trigger a new one
-            // if (this.lastBtnTrigger != 0 && Date.now() - this.lastBtnTrigger < TRIPLE_ANIMATE_WAIT_TIME) {
-            //     this.logger.log(this.logPrefix + "triple raven button pressed. IGNORING DUE TO ELAPSED TIME.")
-            //     return;
-            // }
-                
-            // this.logger.log(this.logPrefix + "triple raven button pressed.")
-            // this.lastBtnTrigger = Date.now();
-            // this.triggerTripleCawAnimation();
-        // });
     }
 
     handleAnimationTimer(isEnabled, waitTimeInMin) {
