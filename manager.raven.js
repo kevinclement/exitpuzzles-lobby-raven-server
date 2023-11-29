@@ -46,7 +46,7 @@ module.exports = class RavenController extends EventEmitter {
             cb()
         }
         
-        this.handlers['raven.disabledButton'] = (s,cb) => {
+        this.handlers['raven.disableButton'] = (s,cb) => {
             this.ref.update({
                 buttonEnabled: false
             })
